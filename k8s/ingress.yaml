@@ -1,0 +1,28 @@
+# Ingress: the single entry point into the cluster from outside.
+# nginx rewrites /rapidocr/ocr → /ocr before forwarding to the service.
+# Without rewrite-target, the pod would receive /rapidocr/ocr but only knows /ocr.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ocr-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /rapidocr(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: rapidocr-service
+                port:
+                  number: 80
+          - path: /tesseract(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tesseract-service
+                port:
+                  number: 80
