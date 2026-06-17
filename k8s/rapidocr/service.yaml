@@ -1,0 +1,15 @@
+# Service: a stable DNS name + load balancer in front of the pods.
+# Even if pods are replaced (new IPs), the Service name stays constant.
+# ClusterIP = only reachable inside the cluster (Ingress accesses it this way).
+apiVersion: v1
+kind: Service
+metadata:
+  name: rapidocr-service
+spec:
+  selector:
+    app: rapidocr           # Routes traffic to pods with this label
+  ports:
+    - protocol: TCP
+      port: 80              # Port this Service listens on (inside the cluster)
+      targetPort: 8000      # Port on the pod to forward traffic to
+  type: ClusterIP

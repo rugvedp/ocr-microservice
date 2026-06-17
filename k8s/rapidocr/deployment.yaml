@@ -1,0 +1,45 @@
+# Deployment: tells Kubernetes "keep 1 copy of this container running,
+# restart it automatically if it crashes, and roll out updates without downtime."
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rapidocr
+  labels:
+    app: rapidocr
+spec:
+  replicas: 1                    # Start with 1 pod; HPA will scale this up/down
+  selector:
+    matchLabels:
+      app: rapidocr              # Deployment manages pods with this label
+  template:
+    metadata:
+      labels:
+        app: rapidocr
+    spec:
+      containers:
+        - name: rapidocr
+          image: rapidocr:latest
+          imagePullPolicy: IfNotPresent   # Use local image if present (good for local minikube)
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:             # Minimum resources reserved for this pod
+              cpu: "250m"         # 250 millicores = 0.25 of 1 CPU core
+              memory: "512Mi"
+            limits:               # Hard ceiling — pod is killed if it exceeds memory limit
+              cpu: "1"
+              memory: "1Gi"
+          livenessProbe:          # Kubernetes restarts the pod if this fails 3 times
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:         # Pod only receives traffic once this passes
+            httpGet:
+              path: /status
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
